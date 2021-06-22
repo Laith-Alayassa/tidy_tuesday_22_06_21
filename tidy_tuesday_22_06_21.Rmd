@@ -20,6 +20,7 @@ library(tidyverse)     # for graphing and data cleaning
 library(lubridate)     # for date manipulation
 library(ggthemes)      # for even more plotting themes
 library(ggbump)
+library(RColorBrewer)
 theme_set(theme_minimal()) # My favorite ggplot() theme :)
 ```
 
@@ -255,38 +256,88 @@ year2020 %>%
   geom_col(state = "identity") +
   theme(axis.text.x = element_text(angle = 90))
 ```
-<!--
-idea:
-
-does spending per residant effect the over all score of a park (contrast with the example from freakonomics in which he shows that there is no relation between candidate expenditure and probability of winning )
--->
 
 
-```{r }
 
-year2020 %>% 
-  ggplot(aes(x = total_pct,
-             y = spend_per_resident_points)) +
-  geom_point() +
-  geom_bump(smooth = 8,
-            )
-
-```
-
-
-```{r}
+```{r, fig.width=16, fig.height=8}
 all_data %>% 
   filter(rank <= 10) %>% 
   ggplot(aes(x = year,
              y = rank,
              color = city,
              label = city)) +
-  geom_label(check_overlap = TRUE) +
+  geom_label(check_overlap = TRUE, position=position_jitter()) +
   geom_bump(size = 1.5,
-            smooth = 10) +
+            smooth = 15) +
   theme(legend.position = "none",
         panel.grid.major = element_blank()) +
-  scale_y_discrete(name ="Dose (mg)", 
-                    limits=c(1:10))
+  scale_y_discrete(name ="Ranking", 
+                    limits=c(1:10)) +
+  labs(
+    title = "Cities with highest park score in the US",
+    x = ""
+  ) +
+   scale_color_manual(values = c("#264653",
+                                 "#2a9d8f",
+                                 "#723d46",
+                                 "#f4a261",
+                                 "#f4a261",
+                                 "#e76f51",
+                                 "#8ecae6",
+                                 "#219ebc",
+                                 "#023047",
+                                 "#ffb703",
+                                 "#fb8500",
+                                 "#ee9b00",
+                                 "#ca6702",
+                                 "#001233",
+                                 "#eb5e28",
+                                 "#ae2012",
+                                 "#9b2226",
+                                 "#bc6c25",
+                                 "#2d6a4f",
+                                 "#7400b8"))
+```
+
+
+
+```{r}
+all_data %>% 
+  # filter(rank <= 10) %>% 
+  ggplot(aes(x = year,
+             y = rank,
+             color = city,
+             label = city)) +
+  # geom_label(check_overlap = TRUE, position=position_jitter()) +
+  geom_bump() +
+  theme(legend.position = "none",
+        panel.grid.major = element_blank()) +
+  # scale_y_discrete(name ="Ranking", 
+  #                   limits=c(1:10)) +
+  labs(
+    title = "Cities with highest park score in the US",
+    x = ""
+  ) 
+# +
+   # scale_color_manual(values = c("#264653",
+   #                               "#2a9d8f",
+   #                               "#723d46",
+   #                               "#f4a261",
+   #                               "#f4a261",
+   #                               "#e76f51",
+   #                               "#8ecae6",
+   #                               "#219ebc",
+   #                               "#023047",
+   #                               "#ffb703",
+   #                               "#fb8500",
+   #                               "#ee9b00",
+   #                               "#ca6702",
+   #                               "#001233",
+   #                               "#eb5e28",
+   #                               "#ae2012",
+   #                               "#9b2226",
+   #                               "#bc6c25",
+   #                               "#2d6a4f",
+   #                               "#7400b8"))
 ```
 
