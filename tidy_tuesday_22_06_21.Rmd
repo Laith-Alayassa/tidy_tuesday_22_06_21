@@ -19,6 +19,7 @@ output:
 library(tidyverse)     # for graphing and data cleaning
 library(lubridate)     # for date manipulation
 library(ggthemes)      # for even more plotting themes
+library(ggbump)
 theme_set(theme_minimal()) # My favorite ggplot() theme :)
 ```
 
@@ -41,6 +42,251 @@ parks <- tuesdata$parks
 parks <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-22/parks.csv')
 
 
+```
 
+```{r}
+
+```
+
+
+```{r}
+parks %>% 
+  
+```
+
+
+```{r}
+parks %>% 
+  filter(year == 2020) %>% 
+  arrange(park_pct_city_data) %>% 
+  head(10) %>% 
+  ggplot(aes(x = city,
+             y = park_pct_city_data)) +
+  geom_col()
+```
+
+```{r}
+library(tidyverse)
+library(pdftools)
+
+raw_pdf <- pdftools::pdf_text("https://parkserve.tpl.org/mapping/historic/2020_ParkScoreRank.pdf")
+
+raw_text <- raw_pdf[[1]] %>% 
+  str_split("\n") %>% 
+  unlist()
+
+table_trimmed <- raw_text %>% 
+  .[13:(length(raw_text)-1)] %>% 
+  str_trim()
+
+all_col_names <- c(
+  "rank",
+  "city",
+  "med_park_size_data",
+  "med_park_size_points",
+  "park_pct_city_data",
+  "park_pct_city_points",
+  "pct_near_park_data",
+  "pct_near_park_points",
+  "spend_per_resident_data",
+  "spend_per_resident_points",
+  "basketball_data",
+  "basketball_points",
+  "dogpark_data",
+  "dogpark_points",
+  "playground_data",
+  "playground_points",
+  "rec_sr_data",
+  "rec_sr_points",
+  "restroom_data",
+  "restroom_points",
+  "splashground_data",
+  "splashground_points",
+  "amenities_points",
+  "total_points",
+  "total_pct",
+  "city_dup"
+)
+
+tab_names <- fwf_empty(
+  table_trimmed,
+  col_names = all_col_names
+)
+
+park_2020_1 <- table_trimmed %>% 
+  read_fwf(
+    tab_names
+  ) 
+
+park_2020_2 <- raw_pdf[[2]] %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  .[1:41] %>% 
+  str_trim() %>% 
+  str_replace_all("\\s{2,}", "|") %>% 
+  read_delim(
+    delim = "|", 
+    col_names = all_col_names
+  )
+
+all_2020 <- bind_rows(park_2020_1, park_2020_2) 
+
+raw_pdf_19 <- pdftools::pdf_text("https://parkserve.tpl.org/mapping/historic/2019_ParkScoreRank.pdf")
+
+raw_pdf_19[[1]] %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  .[13:53] %>% 
+  str_trim() %>% 
+  str_replace_all("\\s{2,}", "|") %>%
+  str_replace_all("% ", "|") %>% 
+  read_delim(
+    delim = "|", 
+    col_names = FALSE
+  ) %>% 
+  set_names(all_col_names[str_detect(all_col_names, "total_pct", negate = TRUE)]) %>% 
+  glimpse()
+
+park_2019_2 <- raw_pdf_19[[2]] %>% 
+  str_split("\n") %>% 
+  unlist() %>% 
+  .[1:44] %>% 
+  str_trim() %>% 
+  str_replace_all("\\s{2,}", "|") %>%
+  str_replace_all("% ", "|") %>% 
+  read_delim(
+    delim = "|", 
+    col_names = FALSE
+  ) %>% 
+  set_names(all_col_names[str_detect(all_col_names, "total_pct", negate = TRUE)]) %>% 
+  glimpse()
+
+read_and_clean <- function(year, page2 = TRUE){
+  
+  raw_pdf_in <- pdftools::pdf_text(glue::glue("https://parkserve.tpl.org/mapping/historic/{year}_ParkScoreRank.pdf"))
+  
+  df1 <- raw_pdf_in[[1]] %>% 
+    str_split("\n") %>% 
+    unlist() %>% 
+    # .[range1] %>% 
+    str_trim() %>% 
+    str_subset("^[[:digit:]]+ ") %>% 
+    str_subset("Ranking|ParkScore", negate = TRUE) %>% 
+    str_replace_all("\\s{2,}", "|") %>%
+    str_replace_all("% ", "|") %>% 
+    read_delim(
+      delim = "|", 
+      col_names = FALSE
+    ) 
+  
+  if(isTRUE(page2)){
+      df2 <- raw_pdf_in[[2]] %>% 
+        str_split("\n") %>% 
+        unlist() %>% 
+        # .[range2] %>% 
+        str_trim() %>% 
+        str_subset("^[[:digit:]]+ ") %>% 
+        str_subset("Ranking|ParkScore", negate = TRUE) %>% 
+        str_replace_all("\\s{2,}", "|") %>%
+        str_replace_all("% ", "|") %>% 
+        read_delim(
+          delim = "|", 
+          col_names = FALSE
+        ) 
+      
+      bind_rows(df1, df2)
+    } else {
+      df1
+    }
+     
+    }
+
+all_2020 <- read_and_clean(2020) %>% 
+  set_names(nm = all_col_names) %>% 
+  mutate(year = 2020)
+all_2019 <- read_and_clean(2019) %>% 
+  set_names(all_col_names[str_detect(all_col_names, "total_points", negate = TRUE)]) %>% 
+  mutate(year = 2019)
+all_2018 <- read_and_clean(2018) %>% 
+  set_names(nm = all_col_names) %>% 
+  mutate(year = 2018)
+all_2017 <- read_and_clean(2017) %>% 
+  set_names(nm = all_col_names[c(1:18, 23:26)]) %>% 
+  rename(park_benches = total_pct) %>% 
+  mutate(year = 2017)
+all_2016 <- read_and_clean(2016) %>% 
+  set_names(nm = c(all_col_names[c(1:18, 23:26)], "city_dup2")) %>% 
+  rename(park_benches = city_dup, city_dup = city_dup2) %>% 
+  mutate(year = 2016)
+all_2015 <- read_and_clean(2015, FALSE) %>% 
+  set_names(nm = c(all_col_names[c(1:18, 23:25)], "park_benches")) %>% 
+  mutate(year = 2015)
+all_2014 <- read_and_clean(2014, FALSE) %>% 
+  set_names(nm = c(all_col_names[c(1:10, 15:16, 25)], "park_benches")) %>% 
+  mutate(year = 2014)
+all_2013 <- read_and_clean(2013, FALSE) %>% 
+  set_names(nm = c(all_col_names[c(1:10, 15:16, 24:25)], "park_benches")) %>% 
+  mutate(year = 2013)
+all_2012 <- read_and_clean(2012, FALSE) %>% 
+  separate(X1, c("rank", "city"), extra = "merge") %>% 
+  mutate(rank = as.double(rank)) %>% 
+  set_names(nm = c(all_col_names[c(1:10, 15:16, 24:25)], "park_benches")) %>% 
+  mutate(year = 2012)
+
+all_data <- bind_rows(list(all_2020, all_2019, all_2018, all_2017, all_2016, all_2015, all_2014, all_2013, all_2012)) %>% 
+  select(year, everything())
+
+all_data %>% 
+  ggplot(aes(x = year, y = med_park_size_data, group = year)) +
+  geom_boxplot()
+```
+
+```{r}
+
+year2020 <- all_2020
+```
+
+
+```{r}
+year2020 %>% 
+  head(20) %>% 
+  ggplot(aes(x = fct_rev(fct_reorder(city, park_pct_city_points)),
+             y = park_pct_city_points)) +
+  geom_col(state = "identity") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+<!--
+idea:
+
+does spending per residant effect the over all score of a park (contrast with the example from freakonomics in which he shows that there is no relation between candidate expenditure and probability of winning )
+-->
+
+
+```{r }
+
+year2020 %>% 
+  ggplot(aes(x = total_pct,
+             y = spend_per_resident_points)) +
+  geom_point() +
+  geom_bump(smooth = 8,
+            )
+
+```
+
+
+```{r}
+all_data %>% 
+  filter(rank <= 10) %>% 
+  ggplot(aes(x = year,
+             y = rank,
+             color = city,
+             label = city)) +
+  geom_label(check_overlap = TRUE) +
+  geom_bump(size = 1.5,
+            smooth = 10) +
+  theme(legend.position = "none",
+        panel.grid.major = element_blank()) +
+  scale_y_discrete(name ="Dose (mg)", 
+                    limits=c(1:10))
 ```
 
