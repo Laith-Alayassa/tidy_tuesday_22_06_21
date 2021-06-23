@@ -12,7 +12,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -21,6 +21,9 @@ library(lubridate)     # for date manipulation
 library(ggthemes)      # for even more plotting themes
 library(ggbump)
 library(RColorBrewer)
+library(ggmap)
+library(gganimate)
+library(maps)
 theme_set(theme_minimal()) # My favorite ggplot() theme :)
 ```
 
@@ -39,34 +42,18 @@ tuesdata <- tidytuesdayR::tt_load(2021, week = 26)
 parks <- tuesdata$parks
 
 # Or read in the data manually
-
-parks <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-22/parks.csv')
+# 
+# parks <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-06-22/parks.csv')
 
 
 ```
 
-```{r}
-
-```
 
 
-```{r}
-parks %>% 
-  
-```
+```{r cleaningScript}
 
+# Cleaning script from the github page
 
-```{r}
-parks %>% 
-  filter(year == 2020) %>% 
-  arrange(park_pct_city_data) %>% 
-  head(10) %>% 
-  ggplot(aes(x = city,
-             y = park_pct_city_data)) +
-  geom_col()
-```
-
-```{r}
 library(tidyverse)
 library(pdftools)
 
@@ -237,30 +224,16 @@ all_2012 <- read_and_clean(2012, FALSE) %>%
 all_data <- bind_rows(list(all_2020, all_2019, all_2018, all_2017, all_2016, all_2015, all_2014, all_2013, all_2012)) %>% 
   select(year, everything())
 
-all_data %>% 
-  ggplot(aes(x = year, y = med_park_size_data, group = year)) +
-  geom_boxplot()
-```
-
-```{r}
-
-year2020 <- all_2020
+# all_data %>% 
+#   ggplot(aes(x = year, y = med_park_size_data, group = year)) +
+#   geom_boxplot()
 ```
 
 
-```{r}
-year2020 %>% 
-  head(20) %>% 
-  ggplot(aes(x = fct_rev(fct_reorder(city, park_pct_city_points)),
-             y = park_pct_city_points)) +
-  geom_col(state = "identity") +
-  theme(axis.text.x = element_text(angle = 90))
-```
+Exploring how the top 10 cities changed over time.
 
-
-
-```{r, fig.width=16, fig.height=8}
-all_data %>% 
+```{r, fig.width=16, fig.height=7}
+top10 <- all_data %>% 
   filter(rank <= 10) %>% 
   ggplot(aes(x = year,
              y = rank,
@@ -271,10 +244,10 @@ all_data %>%
             smooth = 15) +
   theme(legend.position = "none",
         panel.grid.major = element_blank()) +
-  scale_y_discrete(name ="Ranking", 
-                    limits=c(1:10)) +
+  scale_y_reverse(name ="Ranking",
+                  breaks = 1:10) +
   labs(
-    title = "Cities with highest park score in the US",
+    title = "Top 10 cities according to park ranking",
     x = ""
   ) +
    scale_color_manual(values = c("#264653",
@@ -297,47 +270,9 @@ all_data %>%
                                  "#bc6c25",
                                  "#2d6a4f",
                                  "#7400b8"))
+
+top10
 ```
 
 
-
-```{r}
-all_data %>% 
-  # filter(rank <= 10) %>% 
-  ggplot(aes(x = year,
-             y = rank,
-             color = city,
-             label = city)) +
-  # geom_label(check_overlap = TRUE, position=position_jitter()) +
-  geom_bump() +
-  theme(legend.position = "none",
-        panel.grid.major = element_blank()) +
-  # scale_y_discrete(name ="Ranking", 
-  #                   limits=c(1:10)) +
-  labs(
-    title = "Cities with highest park score in the US",
-    x = ""
-  ) 
-# +
-   # scale_color_manual(values = c("#264653",
-   #                               "#2a9d8f",
-   #                               "#723d46",
-   #                               "#f4a261",
-   #                               "#f4a261",
-   #                               "#e76f51",
-   #                               "#8ecae6",
-   #                               "#219ebc",
-   #                               "#023047",
-   #                               "#ffb703",
-   #                               "#fb8500",
-   #                               "#ee9b00",
-   #                               "#ca6702",
-   #                               "#001233",
-   #                               "#eb5e28",
-   #                               "#ae2012",
-   #                               "#9b2226",
-   #                               "#bc6c25",
-   #                               "#2d6a4f",
-   #                               "#7400b8"))
-```
 
